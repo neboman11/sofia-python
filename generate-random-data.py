@@ -16,8 +16,12 @@ def generate_random_row(num_columns, weight=1):
     return [generate_random_integer(weight) for _ in range(num_columns)]
 
 
+# Function to generate random number of rows between 50 and 100
+def generate_random_num_rows():
+    return random.randint(50, 100)
+
+
 def main():
-    num_rows = 100
     num_columns = 10
     num_files = 50
 
@@ -27,7 +31,8 @@ def main():
         user_uuid = uuid.uuid4()
         survey_response = random.randint(1, 5)
         data = [
-            generate_random_row(num_columns, survey_response) for _ in range(num_rows)
+            generate_random_row(num_columns, survey_response)
+            for _ in range(generate_random_num_rows())
         ]
 
         with open(f"user_activity_data/{str(user_uuid)}.csv", "w") as csvfile:
