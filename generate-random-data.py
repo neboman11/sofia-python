@@ -24,7 +24,7 @@ def generate_random_weights(num_weeks):
 
 def main():
     num_columns = 10
-    num_files = 50
+    num_files = 10
     num_days_in_week = 7
 
     # Generate list of dates from February 2, 2024, to April 15, 2024
@@ -60,19 +60,18 @@ def main():
                         + generate_random_row(num_columns, weights[week_num])
                     )
 
+        survey_data_columns = ["Date"]
+        [survey_data_columns.append(f"Column {i + 1}") for i in range(num_columns)]
+
         with open(f"user_activity_data/{str(user_uuid)}.csv", "w") as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(
-                ["Date", "Column 1", "Column 2", "Column 3", "Column 4", "Column 5"]
-            )
+            writer.writerow(survey_data_columns)
             writer.writerows(data)
 
-        [
+        for index, survey_response in enumerate(weights):
             user_survey_responses.append(
                 (user_uuid, f"Week {index + 1}", survey_response)
             )
-            for index, survey_response in enumerate(weights)
-        ]
 
     with open(f"survey_data/user_survey_data.csv", "w") as csvfile:
         writer = csv.writer(csvfile)

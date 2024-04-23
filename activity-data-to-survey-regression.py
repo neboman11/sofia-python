@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import glob
 import os
 import pandas as pd
@@ -33,11 +34,19 @@ def value_collapsing_function(dataframe):
     return one_dimensional_data
 
 
+# Generate list of dates from February 2, 2024, to April 15, 2024
+start_date = datetime(2024, 2, 2)
+end_date = datetime(2024, 4, 15)
+all_dates = [
+    start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)
+]
+one_week = timedelta(weeks=1)
+
 # Initialize an empty list to store data for each user
-X = []
+preprocessed_user_data = []
 
 list_of_csv_files = glob.glob("./user_activity_data/*.csv")
-print(len(list_of_csv_files))
+# print(len(list_of_csv_files))
 
 # Read survey data
 survey_df = pd.read_csv(
@@ -48,15 +57,63 @@ y = survey_df["Survey Answer"]
 
 # Assuming each CSV file name corresponds to the user ID
 for csv_file in list_of_csv_files:
+    week_num = 1
+    current_week = []
+    current_week_start = datetime(2024, 2, 2)
     user_id = os.path.splitext(os.path.basename(csv_file))[0]
 
     # Read activity data for each user
     activity_df = pd.read_csv(csv_file)
 
-    collapsed_activity_scores = value_collapsing_function(activity_df)
+    for index, row in activity_df.iterrows():
+        date = row.Date
+        date = datetime.strptime(date, "%m-%d-%Y")
 
-    # Append user data as a tuple (activity_data, survey_response) to the list
-    X.append(collapsed_activity_scores)
+        current_week.append(row.drop("Date"))
+
+        if (date - current_week_start).days >= 7:
+            collapsed_activity_scores = value_collapsing_function(current_week)
+
+            # Append user data as a tuple (activity_data, survey_response) to the list
+            preprocessed_user_data.append(
+                (user_id, f"Week {week_num}", collapsed_activity_scores)
+            )
+            current_week = []
+            current_week_start += one_week
+            week_num += 1
+
+    preprocessed_user_data.append(
+        (user_id, f"Week {week_num}", value_collapsing_function(current_week))
+    )
+
+preprocessed_user_data = pd.DataFrame(
+    preprocessed_user_data, columns=["user_id", "week_num", "activity_data"]
+)
+
+# print(len(preprocessed_user_data))
+# print(len(survey_df.index))
+
+# print(preprocessed_user_data.head())
+# print(survey_df.head())
+
+preprocessed_user_data = preprocessed_user_data.sort_values(by=["user_id", "week_num"])
+survey_df = survey_df.sort_values(by=["User ID", "Week"])
+
+# print(len(preprocessed_user_data))
+# print(len(survey_df.index))
+
+# print(preprocessed_user_data.head())
+# print(survey_df.head())
+
+X = (
+    preprocessed_user_data.drop("user_id", axis=1)
+    .drop("week_num", axis=1)
+    .values.tolist()
+)
+X = [row[0] for row in X]
+y = survey_df.drop("User ID", axis=1).drop("Week", axis=1)
+
+print(len(X[1]))
 
 model = LogisticRegression(multi_class="multinomial", solver="lbfgs")
 
