@@ -24,7 +24,7 @@ def generate_random_weights(num_weeks):
 
 def main():
     num_columns = 10
-    num_files = 10
+    num_files = 100
     num_days_in_week = 7
 
     # Generate list of dates from February 2, 2024, to April 15, 2024
